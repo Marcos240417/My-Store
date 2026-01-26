@@ -7,17 +7,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.mymercado.core.data.CarrinhoEntity
+import com.example.mymercado.core.data.FormaPagamento
 import com.example.mymercado.features.carrinho.CarrinhoViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
@@ -26,10 +27,12 @@ import java.util.Locale
 @Composable
 fun CarrinhoScreen(
     viewModel: CarrinhoViewModel = koinViewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigateToCheckout: (FormaPagamento) -> Unit
 ) {
     val itens by viewModel.itensCarrinho.collectAsState()
     val total by viewModel.valorTotal.collectAsState()
+    val localeBr = remember { Locale.forLanguageTag("pt-BR") }
 
     Scaffold(
         topBar = {
@@ -39,88 +42,66 @@ fun CarrinhoScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
+                },
+                actions = {
+                    if (itens.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.finalizarCompra() }) {
+                            Icon(Icons.Default.DeleteSweep, "Limpar", tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 }
             )
         },
         bottomBar = {
-            Surface(tonalElevation = 8.dp) {
-                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Total do pedido:")
-                        Text(
-                            "R$ ${String.format(Locale.getDefault(), "%.2f", total)}",
-                            color = Color(0xFF2E7D32),
-                            fontWeight = FontWeight.ExtraBold,
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                    }
-                    Button(
-                        onClick = { viewModel.finalizarCompra() },
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp).height(56.dp),
-                        enabled = itens.isNotEmpty()
-                    ) {
-                        Text("FINALIZAR COMPRA")
+            if (itens.isNotEmpty()) {
+                Surface(tonalElevation = 8.dp, shadowElevation = 8.dp) {
+                    Column(modifier = Modifier.navigationBarsPadding().padding(16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Total:", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                text = String.format(localeBr, "R$ %.2f", total),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Button(
+                            onClick = { onNavigateToCheckout(FormaPagamento.PIX) },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("IR PARA O PAGAMENTO", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
         }
-    ) { innerPadding ->
+    ) { padding ->
         if (itens.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text("Seu carrinho está vazio 🛒", color = Color.Gray)
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Seu carrinho está vazio", color = Color.Gray)
+                    TextButton(onClick = onBack) { Text("Voltar para a loja") }
+                }
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                items(itens, key = { it.id }) { item ->
-                    ItemCarrinhoCard(
-                        item = item,
-                        onRemove = { viewModel.removerItem(item) }
+            LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+                // CORREÇÃO: Removido 'key' para evitar erro Key Already Used
+                items(itens) { item ->
+                    ListItem(
+                        headlineContent = { Text(item.titulo, fontWeight = FontWeight.SemiBold) },
+                        supportingContent = {
+                            Text("${item.quantidade}x ${String.format(localeBr, "R$ %.2f", item.precoNoMomento)}")
+                        },
+                        trailingContent = {
+                            IconButton(onClick = { viewModel.removerItem(item) }) {
+                                Icon(Icons.Default.Delete, "Remover", tint = Color.Red)
+                            }
+                        }
                     )
+                    HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun ItemCarrinhoCard(item: CarrinhoEntity, onRemove: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Imagem Real do Produto no Carrinho
-            AsyncImage(
-                model = item.urlImagem,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                Text(item.titulo, fontWeight = FontWeight.Bold, maxLines = 2)
-                Text("Qtd: ${item.quantidade}", color = Color.Gray)
-                Text(
-                    "R$ ${String.format(Locale.getDefault(), "%.2f", item.precoNoMomento)}",
-                    color = Color(0xFF2E7D32),
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            IconButton(onClick = onRemove) {
-                Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red)
             }
         }
     }
