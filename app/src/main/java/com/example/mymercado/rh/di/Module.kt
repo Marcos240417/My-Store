@@ -1,9 +1,6 @@
 package com.example.mymercado.rh.di
 
-import com.example.mymercado.core.dao.CarrinhoDao
-import com.example.mymercado.core.dao.ProdutoDao
-import com.example.mymercado.core.dao.UsuarioDao
-import com.example.mymercado.core.dao.VendedorDao
+import com.example.mymercado.core.dao.*
 import com.example.mymercado.core.data.remotestorefake.FakeStoreService
 import com.example.mymercado.core.data.remoteviacep.ViaCepService
 import com.example.mymercado.core.db.AppDatabase
@@ -11,7 +8,10 @@ import com.example.mymercado.domain.repository.VendasRepository
 import com.example.mymercado.domain.repository.VendasRepositoryImpl
 import com.example.mymercado.features.cadastroviewmodel.CadastroViewModel
 import com.example.mymercado.features.carrinho.CarrinhoViewModel
+import com.example.mymercado.features.checkout.CheckoutViewModel
 import com.example.mymercado.features.detalhes.DetalhesViewModel
+import com.example.mymercado.features.favoritos.FavoritosViewModel
+import com.example.mymercado.features.historico.HistoricoViewModel
 import com.example.mymercado.features.home.HomeViewModel
 import com.example.mymercado.features.perfil.PerfilViewModel
 import org.koin.android.ext.koin.androidContext
@@ -28,18 +28,20 @@ val databaseModule = module {
     single<ProdutoDao> { get<AppDatabase>().produtoDao() }
     single<VendedorDao> { get<AppDatabase>().vendedorDao() }
     single<CarrinhoDao> { get<AppDatabase>().carrinhoDao() }
+    single<PedidoDao> { get<AppDatabase>().pedidoDao() } // ADICIONADO: Necessário para o histórico
 }
 
 // 2. Definição dos Repositórios
 val repositoryModule = module {
     single<VendasRepository> {
         VendasRepositoryImpl(
-            get(), // produtoDao
-            get(), // carrinhoDao
-            get(), // usuarioDao
-            get(), // vendedorDao
-            get(), // FakeStoreService
-            get()  // ViaCepService (O Koin agora vai encontrar este get)
+            produtoDao = get(),
+            carrinhoDao = get(),
+            usuarioDao = get(),
+            vendedorDao = get(),
+            pedidoDao = get(),     // ADICIONADO: 5º parâmetro do construtor
+            api = get(),            // FakeStoreService
+            viaCepService = get()   // ViaCepService
         )
     }
 }
@@ -51,6 +53,9 @@ val viewModelModule = module {
     viewModel { DetalhesViewModel(get()) }
     viewModel { PerfilViewModel(get()) }
     viewModel { CadastroViewModel(get()) }
+    viewModel { CheckoutViewModel(get()) }
+    viewModel { HistoricoViewModel(get()) }
+    viewModel { FavoritosViewModel(get()) }
 }
 
 // 4. Definição de Rede (Network)
@@ -65,8 +70,7 @@ val networkModule = module {
             .create(FakeStoreService::class.java)
     }
 
-    // ADICIONADO: Serviço do ViaCEP (Endereço)
-    // Sem isso, o Repository falha ao ser criado
+    // Serviço do ViaCEP (Endereço)
     single<ViaCepService> {
         Retrofit.Builder()
             .baseUrl("https://viacep.com.br/ws/")
