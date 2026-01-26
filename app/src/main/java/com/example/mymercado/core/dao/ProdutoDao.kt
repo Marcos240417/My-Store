@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProdutoDao {
-    @Query("SELECT * FROM produtos")
+    @Query("SELECT * FROM produtos ORDER BY titulo ASC")
     fun listarTodos(): Flow<List<ProdutoEntity>>
 
     @Query("SELECT * FROM produtos WHERE categoria = :categoria")
@@ -20,4 +20,11 @@ interface ProdutoDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun inserir(produto: ProdutoEntity)
+
+    // --- NOVOS MÉTODOS DE FAVORITOS ---
+    @Query("SELECT * FROM produtos WHERE isFavorito = 1")
+    fun listarFavoritos(): Flow<List<ProdutoEntity>>
+
+    @Query("UPDATE produtos SET isFavorito = :favorito WHERE produtoId = :id")
+    suspend fun atualizarFavorito(id: Int, favorito: Boolean)
 }

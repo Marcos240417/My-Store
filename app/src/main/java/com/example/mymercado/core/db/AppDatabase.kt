@@ -5,10 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.mymercado.core.dao.CarrinhoDao
+import com.example.mymercado.core.dao.PedidoDao
 import com.example.mymercado.core.dao.ProdutoDao
 import com.example.mymercado.core.dao.UsuarioDao
 import com.example.mymercado.core.dao.VendedorDao
 import com.example.mymercado.core.data.CarrinhoEntity
+import com.example.mymercado.core.data.PedidoEntity
 import com.example.mymercado.core.data.ProdutoEntity
 import com.example.mymercado.core.data.UsuarioEntity
 import com.example.mymercado.core.data.VendedorEntity
@@ -18,7 +20,8 @@ import com.example.mymercado.core.data.VendedorEntity
         UsuarioEntity::class,
         VendedorEntity::class,
         ProdutoEntity::class,
-        CarrinhoEntity::class
+        CarrinhoEntity::class,
+        PedidoEntity::class
     ],
     version = 3, // Versão atualizada para suportar as novas entidades de vendas
     exportSchema = false
@@ -30,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun vendedorDao(): VendedorDao
     abstract fun produtoDao(): ProdutoDao
     abstract fun carrinhoDao(): CarrinhoDao
+    abstract fun pedidoDao(): PedidoDao
 
     companion object {
         @Volatile
@@ -46,7 +50,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "galga_vendas_db" // Nome do arquivo do banco de dados
                 )
-                    .fallbackToDestructiveMigration(false) // Limpa o banco se houver mudança de versão sem Migration
+                    .fallbackToDestructiveMigration(dropAllTables = false) // Limpa o banco se houver mudança de versão sem Migration
                     .build()
                 INSTANCE = instance
                 instance

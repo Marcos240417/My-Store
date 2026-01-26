@@ -15,5 +15,6 @@ data class UsuarioEntity(
     val bairro: String,
     val numero: String,
     val cidade: String,
-    val estado: String
+    val estado: String,
+    val formaPagamentoPadrao: String = "PIX"
 )

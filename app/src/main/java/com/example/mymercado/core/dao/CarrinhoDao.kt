@@ -7,7 +7,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.mymercado.core.data.CarrinhoEntity
 import kotlinx.coroutines.flow.Flow
-
 @Dao
 interface CarrinhoDao {
     @Query("SELECT * FROM carrinho WHERE usuarioEmail = :email")
@@ -15,6 +14,9 @@ interface CarrinhoDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun inserirOuAtualizar(item: CarrinhoEntity)
+
+    @Query("SELECT * FROM carrinho WHERE produtoId = :pId AND usuarioEmail = :email LIMIT 1")
+    suspend fun buscarItemNoCarrinho(pId: Int, email: String): CarrinhoEntity?
 
     @Delete
     suspend fun deletarItem(item: CarrinhoEntity)

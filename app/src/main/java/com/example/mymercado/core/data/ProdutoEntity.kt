@@ -12,5 +12,6 @@ data class ProdutoEntity(
     val categoria: String,
     val urlImagem: String,
     val estoque: Int,
-    val vendedorDonoId: Int // Relaciona com o VendedorEntity
+    val vendedorDonoId: Int, // Relaciona com o VendedorEntity
+    val isFavorito: Boolean = false
 )

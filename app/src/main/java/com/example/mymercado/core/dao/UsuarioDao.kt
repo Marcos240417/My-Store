@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UsuarioDao {
-    @Query("SELECT * FROM usuarios WHERE email = :email")
+    @Query("SELECT * FROM usuarios WHERE email = :email LIMIT 1")
     fun obterUsuarioPorEmail(email: String): Flow<UsuarioEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
