@@ -82,19 +82,29 @@ dependencies {
     implementation(libs.coil.compose)
 
     // Material Icons (Core)
-    implementation("androidx.compose.material:material-icons-core")
+    implementation(libs.androidx.compose.material.icons.core)
 
     // Material Icons Extended (Delete, Edit, Done, etc.)
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.compose.material.icons.extended)
 
     // Navegação entre telas (NavHost, NavController)
-    implementation("androidx.navigation:navigation-compose:2.8.5")
+    implementation(libs.androidx.navigation.compose)
 
     // Ciclo de vida e integração de ViewModel com Compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     // Ícones completos (Essencial para Carrinho, Busca e Perfil)
-    implementation("androidx.compose.material:material-icons-core:1.7.6")
-    implementation("androidx.compose.material:material-icons-extended:1.7.6")
+    implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.material.icons.extended)
+
+    // Lottie (para animações, como o check de sucesso)
+    implementation(libs.lottie.compose)
+
+    implementation(libs.androidx.core.splashscreen)
+
+    // ... outras dependências
+    implementation(libs.zxing.android.embedded)
+    // Para funcionar com Compose Image, precisaremos de uma forma de converter Bitmap para ImageBitmap
+    implementation(libs.androidx.ui.graphics)
 }
