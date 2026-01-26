@@ -5,60 +5,83 @@ import androidx.lifecycle.viewModelScope
 import com.example.mymercado.core.data.CarrinhoEntity
 import com.example.mymercado.core.data.ProdutoEntity
 import com.example.mymercado.domain.repository.VendasRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
 
-    private val _produtos = MutableStateFlow<List<ProdutoEntity>>(emptyList())
-    val produtos: StateFlow<List<ProdutoEntity>> = _produtos.asStateFlow()
+    private val _textoBusca = MutableStateFlow("")
+    val textoBusca = _textoBusca.asStateFlow()
+
+    private val _categoriaAtiva = MutableStateFlow("Todos")
+    val categoriaAtiva = _categoriaAtiva.asStateFlow()
 
     private val _estaCarregando = MutableStateFlow(false)
-    val estaCarregando: StateFlow<Boolean> = _estaCarregando.asStateFlow()
+    val estaCarregando = _estaCarregando.asStateFlow()
 
-    // Observa o carrinho do usuário padrão
+    // Estado para controle do Modo Offline
+    private val _mostrarAvisoOffline = MutableStateFlow(false)
+    val mostrarAvisoOffline = _mostrarAvisoOffline.asStateFlow()
+
+    init {
+        sincronizar()
+    }
+
+    // Função atualizada para lidar com erros de conexão
+    fun sincronizar() {
+        viewModelScope.launch {
+            _estaCarregando.value = true
+            _mostrarAvisoOffline.value = false
+            try {
+                repository.sincronizarProdutos()
+                _mostrarAvisoOffline.value = false
+            } catch (e: Exception) {
+                _mostrarAvisoOffline.value = true
+                e.printStackTrace()
+            } finally {
+                _estaCarregando.value = false
+            }
+        }
+    }
+
     val itensCarrinho: StateFlow<List<CarrinhoEntity>> = repository.verCarrinho("user@galga.com")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    init {
-        observarProdutos()
-        sincronizarDados()
-    }
+    val favoritos: StateFlow<List<ProdutoEntity>> = repository.listarFavoritos()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private fun observarProdutos() {
-        viewModelScope.launch {
-            repository.listarProdutos().collectLatest { _produtos.value = it }
-        }
-    }
+    val produtos: StateFlow<List<ProdutoEntity>> = combine(
+        repository.listarProdutos(), _textoBusca, _categoriaAtiva
+    ) { lista, busca, categoria ->
+        lista
+            .distinctBy { it.produtoId }
+            .filter {
+                val matchCat = categoria == "Todos" || it.categoria.equals(categoria, ignoreCase = true)
+                val matchBusca = it.titulo.contains(busca, ignoreCase = true)
+                matchCat && matchBusca
+            }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private fun sincronizarDados() {
-        viewModelScope.launch {
-            _estaCarregando.value = true
-            try { repository.sincronizarProdutos() } catch (e: Exception) { e.printStackTrace() }
-            finally { _estaCarregando.value = false }
-        }
-    }
-
-    fun filtrarPorCategoria(categoria: String) {
-        viewModelScope.launch {
-            val fluxo = if (categoria == "Todos") repository.listarProdutos()
-            else repository.buscarProdutosPorCategoria(categoria)
-            fluxo.collectLatest { _produtos.value = it }
-        }
-    }
+    fun atualizarBusca(t: String) { _textoBusca.value = t }
+    fun atualizarCategoria(c: String) { _categoriaAtiva.value = c }
 
     fun adicionarAoCarrinho(produto: ProdutoEntity) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.adicionarProdutoAoCarrinho(
                 CarrinhoEntity(
                     produtoId = produto.produtoId,
                     usuarioEmail = "user@galga.com",
-                    quantidade = 1,
-                    precoNoMomento = produto.preco,
                     titulo = produto.titulo,
-                    urlImagem = produto.urlImagem
+                    precoNoMomento = produto.preco,
+                    urlImagem = produto.urlImagem,
+                    quantidade = 1
                 )
             )
         }
+    }
+
+    fun alternarFavorito(id: Int, isFav: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) { repository.alternarFavorito(id, isFav) }
     }
 }

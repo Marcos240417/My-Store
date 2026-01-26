@@ -1,8 +1,8 @@
-package com.example.mymercado.features.perfil
+package com.example.mymercado.features.favoritos
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mymercado.core.data.UsuarioEntity
+import com.example.mymercado.core.data.ProdutoEntity
 import com.example.mymercado.domain.repository.VendasRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -10,24 +10,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
 
-class PerfilViewModel(private val repository: VendasRepository) : ViewModel() {
+class FavoritosViewModel(private val repository: VendasRepository) : ViewModel() {
 
-    val usuario: StateFlow<UsuarioEntity?> = repository.obterUsuarioPorEmail("user@galga.com")
+    val produtosFavoritos: StateFlow<List<ProdutoEntity>> = repository.listarFavoritos()
         .flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
+            initialValue = emptyList()
         )
 
-    fun excluirConta() {
+    fun removerDosFavoritos(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                repository.deletarContaUsuario("user@galga.com")
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            repository.alternarFavorito(id, false)
         }
     }
 }
