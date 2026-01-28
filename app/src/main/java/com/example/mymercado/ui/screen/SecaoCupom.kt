@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+// ESTES IMPORTS SÃO OBRIGATÓRIOS PARA O 'by' FUNCIONAR
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,7 +19,10 @@ fun SecaoCupom(
     viewModel: CheckoutViewModel,
     subtotal: Double
 ) {
+    // Especificamos <String> para ajudar o compilador a inferir o tipo 'T'
     var textoCupom by remember { mutableStateOf("") }
+
+    // O 'collectAsState' também precisa do import 'getValue' acima
     val cupomAtivo by viewModel.cupomAplicado.collectAsState()
 
     Card(

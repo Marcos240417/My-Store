@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,7 +33,7 @@ fun CheckoutScreen(
     itensNoCarrinho: List<CarrinhoEntity>,
     viewModel: CheckoutViewModel = koinViewModel(),
     onBack: () -> Unit,
-    onNavigateToSucesso: () -> Unit
+    onConfirmarPagamento: (Double) -> Unit // Passamos o desconto para finalizar
 ) {
     val context = LocalContext.current
     val localeBr = remember { Locale.forLanguageTag("pt-BR") }
@@ -47,6 +46,7 @@ fun CheckoutScreen(
     }
     val totalFinal = subtotal - valorDesconto
 
+    // Sincroniza detalhes do pagamento sempre que o total final mudar (ex: aplicar cupom)
     LaunchedEffect(formaPagamento, totalFinal) {
         viewModel.carregarDetalhesPagamento(formaPagamento, totalFinal)
     }
@@ -54,10 +54,10 @@ fun CheckoutScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Finalizar Pagamento") },
+                title = { Text("Finalizar Pagamento", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 }
             )
@@ -71,7 +71,7 @@ fun CheckoutScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // CARD DE VALORES
+            // CARD DE RESUMO DE VALORES
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -88,7 +88,7 @@ fun CheckoutScreen(
                             Text(String.format(localeBr, "- R$ %.2f", valorDesconto), color = Color(0xFF2E7D32))
                         }
                     }
-                    Divider(Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Text(
                         text = String.format(localeBr, "Total: R$ %.2f", totalFinal),
                         style = MaterialTheme.typography.headlineSmall,
@@ -104,47 +104,51 @@ fun CheckoutScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // CONTEÚDO DO MÉTODO DE PAGAMENTO
+            // CONTEÚDO DINÂMICO DO MEIO DE PAGAMENTO
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 when (val status = statusPagamento) {
-                    is PagamentoStatus.Carregando -> { CircularProgressIndicator() }
+                    is PagamentoStatus.Carregando -> {
+                        CircularProgressIndicator()
+                    }
                     is PagamentoStatus.PixGerado -> {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            status.qrCode?.let { Image(bitmap = it.asImageBitmap(), contentDescription = null, modifier = Modifier.size(180.dp)) }
+                            status.qrCode?.let {
+                                Image(bitmap = it.asImageBitmap(), contentDescription = null, modifier = Modifier.size(180.dp))
+                            }
                             Spacer(Modifier.height(8.dp))
                             Button(onClick = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 clipboard.setPrimaryClip(ClipData.newPlainText("PIX", status.chave))
-                                Toast.makeText(context, "Copiado!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Chave PIX copiada!", Toast.LENGTH_SHORT).show()
                             }) { Text("COPIAR CHAVE PIX") }
                         }
                     }
                     is PagamentoStatus.BoletoGerado -> {
-                        OutlinedTextField(value = status.codigo, onValueChange = {}, readOnly = true, label = { Text("Código de barras") })
+                        OutlinedTextField(
+                            value = status.codigo,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Código de barras do boleto") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                     is PagamentoStatus.CartaoOpcoes -> {
-                        Text("Opções de Parcelamento geradas para R$ ${String.format("%.2f", totalFinal)}")
+                        Text("Pagamento via Cartão de Crédito selecionado.")
+                        Text("Total: R$ ${String.format(localeBr, "%.2f", totalFinal)}", fontWeight = FontWeight.Bold)
                     }
-                    else -> {}
+                    else -> { }
                 }
             }
 
             Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = {
-                    viewModel.confirmarPagamento(
-                        usuarioEmail = "user@galga.com",
-                        formaPagamento = formaPagamento.name,
-                        itens = itensNoCarrinho,
-                        valorDesconto = valorDesconto,
-                        onSucesso = onNavigateToSucesso
-                    )
-                },
-                modifier = Modifier.fillMaxWidth().height(56.dp)
+                onClick = { onConfirmarPagamento(valorDesconto) },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text("CONFIRMAR PAGAMENTO")
+                Text("CONFIRMAR E FINALIZAR COMPRA")
             }
         }
     }

@@ -20,7 +20,7 @@ fun NavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = "splash"
     ) {
-        // TELA SPLASH
+        // --- TELA SPLASH ---
         composable("splash") {
             SplashScreen(onFinished = {
                 navController.navigate(Screen.Home.route) {
@@ -29,7 +29,7 @@ fun NavGraph(navController: NavHostController) {
             })
         }
 
-        // TELA HOME
+        // --- TELA HOME ---
         composable(Screen.Home.route) {
             HomeScreen(
                 viewModel = koinViewModel(),
@@ -48,7 +48,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // TELA DETALHES
+        // --- TELA DETALHES ---
         composable(
             route = Screen.DetalhesProduto.route,
             arguments = listOf(navArgument("produtoId") { type = NavType.IntType })
@@ -61,7 +61,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // TELA FAVORITOS
+        // --- TELA FAVORITOS ---
         composable("favoritos") {
             FavoritosScreen(
                 viewModel = koinViewModel(),
@@ -72,7 +72,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // TELA CARRINHO
+        // --- TELA CARRINHO ---
         composable(Screen.Carrinho.route) {
             CarrinhoScreen(
                 viewModel = koinViewModel(),
@@ -83,7 +83,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // TELA DE CHECKOUT
+        // --- TELA DE CHECKOUT (SINCRONIZADA) ---
         composable(
             route = "checkout/{forma}",
             arguments = listOf(navArgument("forma") { type = NavType.StringType })
@@ -92,26 +92,29 @@ fun NavGraph(navController: NavHostController) {
             val forma = try {
                 FormaPagamento.valueOf(formaName)
             } catch (e: Exception) {
-                e.printStackTrace()
                 FormaPagamento.PIX
             }
 
             val checkoutViewModel: CheckoutViewModel = koinViewModel()
             val homeViewModel: HomeViewModel = koinViewModel()
-            val itensCarrinho by homeViewModel.itensCarrinho.collectAsState()
+
+            // Coletamos os itens do carrinho para passar à Screen e à função de finalizar
+            val itensNoCarrinho by homeViewModel.itensCarrinho.collectAsState()
 
             CheckoutScreen(
                 formaPagamento = forma,
-                itensNoCarrinho = itensCarrinho,
+                itensNoCarrinho = itensNoCarrinho,
+                viewModel = checkoutViewModel,
                 onBack = { navController.popBackStack() },
-                onConfirmarPagamento = {
+                onConfirmarPagamento = { desconto ->
                     checkoutViewModel.confirmarPagamento(
                         usuarioEmail = "user@galga.com",
                         formaPagamento = forma.name,
-                        itensNoCarrinho = itensCarrinho,
+                        itensNoCarrinho = itensNoCarrinho,
+                        valorDesconto = desconto,
                         onSucesso = {
                             navController.navigate("sucesso") {
-                                // Limpa o histórico de checkout para não voltar para ele ao pressionar 'voltar'
+                                // Limpa a pilha até a Home para evitar que o usuário volte ao checkout
                                 popUpTo(Screen.Home.route) { inclusive = false }
                             }
                         }
@@ -120,18 +123,23 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // TELA DE SUCESSO
+        // --- TELA DE SUCESSO ---
         composable("sucesso") {
             SucessoScreen(
                 onVoltarParaHome = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onIrParaPedidos = {
+                    navController.navigate("historico") {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
                 }
             )
         }
 
-        // TELA PERFIL
+        // --- TELA PERFIL ---
         composable(Screen.Perfil.route) {
             PerfilScreen(
                 viewModel = koinViewModel(),
@@ -150,7 +158,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // TELA HISTÓRICO DE PEDIDOS
+        // --- TELA HISTÓRICO DE PEDIDOS ---
         composable("historico") {
             HistoricoScreen(
                 viewModel = koinViewModel(),
@@ -158,7 +166,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // TELA CADASTRO
+        // --- TELA CADASTRO ---
         composable(Screen.Cadastro.route) {
             CadastroScreen(
                 viewModel = koinViewModel(),
