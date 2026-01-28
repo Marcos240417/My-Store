@@ -20,7 +20,6 @@ class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
     private val _estaCarregando = MutableStateFlow(false)
     val estaCarregando = _estaCarregando.asStateFlow()
 
-    // Estado para controle do Modo Offline
     private val _mostrarAvisoOffline = MutableStateFlow(false)
     val mostrarAvisoOffline = _mostrarAvisoOffline.asStateFlow()
 
@@ -28,17 +27,14 @@ class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
         sincronizar()
     }
 
-    // Função atualizada para lidar com erros de conexão
     fun sincronizar() {
         viewModelScope.launch {
             _estaCarregando.value = true
             _mostrarAvisoOffline.value = false
             try {
                 repository.sincronizarProdutos()
-                _mostrarAvisoOffline.value = false
             } catch (e: Exception) {
                 _mostrarAvisoOffline.value = true
-                e.printStackTrace()
             } finally {
                 _estaCarregando.value = false
             }
@@ -48,6 +44,7 @@ class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
     val itensCarrinho: StateFlow<List<CarrinhoEntity>> = repository.verCarrinho("user@galga.com")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Mantido e pronto para uso na HomeScreen (Badge ou ícone)
     val favoritos: StateFlow<List<ProdutoEntity>> = repository.listarFavoritos()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -56,9 +53,9 @@ class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
     ) { lista, busca, categoria ->
         lista
             .distinctBy { it.produtoId }
-            .filter {
-                val matchCat = categoria == "Todos" || it.categoria.equals(categoria, ignoreCase = true)
-                val matchBusca = it.titulo.contains(busca, ignoreCase = true)
+            .filter { produto ->
+                val matchCat = categoria == "Todos" || produto.categoria.equals(categoria, ignoreCase = true)
+                val matchBusca = produto.titulo.contains(busca, ignoreCase = true)
                 matchCat && matchBusca
             }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -68,20 +65,31 @@ class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
 
     fun adicionarAoCarrinho(produto: ProdutoEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.adicionarProdutoAoCarrinho(
-                CarrinhoEntity(
-                    produtoId = produto.produtoId,
-                    usuarioEmail = "user@galga.com",
-                    titulo = produto.titulo,
-                    precoNoMomento = produto.preco,
-                    urlImagem = produto.urlImagem,
-                    quantidade = 1
+            try {
+                // CORREÇÃO: Passando o vendedorNome obrigatório
+                // Simulamos o nome da loja baseado na categoria para o agrupamento Shopee
+                val nomeLoja = "${produto.categoria.replaceFirstChar { it.uppercase() }} Store"
+
+                repository.adicionarProdutoAoCarrinho(
+                    CarrinhoEntity(
+                        produtoId = produto.produtoId,
+                        usuarioEmail = "user@galga.com",
+                        titulo = produto.titulo,
+                        precoNoMomento = produto.preco,
+                        urlImagem = produto.urlImagem,
+                        quantidade = 1,
+                        vendedorNome = nomeLoja // Parâmetro agora preenchido
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     fun alternarFavorito(id: Int, isFav: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) { repository.alternarFavorito(id, isFav) }
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.alternarFavorito(id, isFav)
+        }
     }
 }

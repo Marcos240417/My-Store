@@ -29,6 +29,10 @@ class DetalhesViewModel(private val repository: VendasRepository) : ViewModel() 
     fun adicionarAoCarrinho(produto: ProdutoEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // CORREÇÃO: Passando o vendedorNome para bater com a nova Entity
+                // Usamos a categoria como nome da loja ou um nome fixo para simular a Shopee
+                val nomeDaLoja = produto.categoria.replaceFirstChar { it.uppercase() } + " Official"
+
                 repository.adicionarProdutoAoCarrinho(
                     CarrinhoEntity(
                         produtoId = produto.produtoId,
@@ -36,7 +40,8 @@ class DetalhesViewModel(private val repository: VendasRepository) : ViewModel() 
                         quantidade = 1,
                         precoNoMomento = produto.preco,
                         titulo = produto.titulo,
-                        urlImagem = produto.urlImagem
+                        urlImagem = produto.urlImagem,
+                        vendedorNome = nomeDaLoja // Agora o parâmetro está aqui!
                     )
                 )
             } catch (e: Exception) {
