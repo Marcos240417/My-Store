@@ -1,6 +1,6 @@
-package com.example.mymercado.core.data.remoteviacep
+package com.example.mymercado.data.datasource.remote.dto
 
-import com.example.mymercado.core.data.UsuarioEntity // Ou sua entidade de Endereço
+import com.example.mymercado.data.datasource.local.entity.UsuarioEntity // Ou sua entidade de Endereço
 
 data class EnderecoDto(
     val cep: String,
@@ -16,15 +16,17 @@ data class EnderecoDto(
 // Ajuste os campos conforme sua UsuarioEntity ou EnderecoEntity
 fun EnderecoDto.toUsuarioEntity(nome: String, email: String, cpf: String, telefone: String, numero: String): UsuarioEntity {
     return UsuarioEntity(
-        nome = nome,
         email = email,
+        nome = nome,
+        cpf = cpf,
+        telefone = telefone,
         cep = this.cep,
         logradouro = this.logradouro,
         bairro = this.bairro,
+        numero = numero,
         cidade = this.localidade,
         estado = this.uf,
-        cpf = cpf,
-        telefone = telefone,
-        numero = numero,
+        localidade = this.localidade,
+        uf = this.uf
     )
 }
