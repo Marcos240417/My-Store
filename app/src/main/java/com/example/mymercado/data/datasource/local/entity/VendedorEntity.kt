@@ -1,4 +1,4 @@
-package com.example.mymercado.core.data
+package com.example.mymercado.data.datasource.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -1,10 +1,10 @@
-package com.example.mymercado.core.dao
+package com.example.mymercado.data.datasource.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.example.mymercado.core.data.UsuarioEntity
+import com.example.mymercado.data.datasource.local.entity.UsuarioEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -17,4 +17,7 @@ interface UsuarioDao {
 
     @Query("DELETE FROM usuarios WHERE email = :email")
     suspend fun deletarUsuario(email: String)
+
+    @Query("SELECT * FROM usuarios WHERE email = :email LIMIT 1")
+    suspend fun obterUsuarioPorEmailSimples(email: String): UsuarioEntity?
 }
