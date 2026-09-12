@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mercado Galga | Case Study & Engenharia Android</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Prism.js para Syntax Highlighting de Código -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-kotlin.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              orange: '#EE4D2D',
+              orangeDark: '#D03E1F',
+              darkBg: '#090A0F',
+              cardBg: '#11131F',
+              cardBorder: '#1E2337',
+              accent: '#3B82F6',
+              codeBg: '#0D0E15'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glow-orange {
+      box-shadow: 0 0 60px -15px rgba(238, 77, 45, 0.3);
+    }
+    .grid-pattern {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    }
+    pre[class*="language-"] {
+      background: #0D0E15 !important;
+      margin: 0 !important;
+      padding: 1.25rem !important;
+      border-radius: 0 0 0.75rem 0.75rem !important;
+      font-size: 0.85rem !important;
+    }
+  </style>
+</head>
+<body class="bg-brand-darkBg text-slate-200 font-sans antialiased selection:bg-brand-orange selection:text-white relative overflow-x-hidden">
+
+  <!-- Background Grid & Glow -->
+  <div class="fixed inset-0 grid-pattern pointer-events-none z-0"></div>
+  <div class="fixed top-[-10rem] left-1/2 -translate-x-1/2 w-[55rem] h-[25rem] bg-brand-orange/15 rounded-full blur-3xl pointer-events-none z-0"></div>
+
+  <!-- Barra de Navegação -->
+  <nav class="sticky top-0 z-50 backdrop-blur-md bg-brand-darkBg/80 border-b border-brand-cardBorder">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="w-2.5 h-2.5 rounded-full bg-brand-orange animate-pulse"></span>
+        <span class="font-bold text-lg text-white tracking-tight">Mercado Galga</span>
+        <span class="hidden sm:inline-block text-[11px] uppercase font-mono px-2 py-0.5 rounded bg-brand-orange/10 text-brand-orange border border-brand-orange/20">Android Architecture Case</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="#arquitetura" class="text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition">Arquitetura</a>
+        <a href="#snippets" class="text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition">Código Fonte</a>
+        <a href="https://github.com/Marcos240417/My-Store" target="_blank" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white/5 border border-white/10 hover:bg-white/10 text-white transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          Repositório
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="relative z-10 pt-16 pb-12 px-6 max-w-5xl mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-orange/10 border border-brand-orange/20 text-brand-orange text-xs font-mono mb-6">
+      <span>Kotlin</span> • <span>Jetpack Compose</span> • <span>Room</span> • <span>Koin</span> • <span>Retrofit</span>
+    </div>
+    <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-[1.15] mb-6">
+      Engenharia de Alta Performance no <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-orange to-amber-400">Android Nativo</span>.
+    </h1>
+    <p class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed mb-8">
+      Estudo aprofundado de caso para o aplicativo <strong>Mercado Galga</strong>: catálogo offline-first, integração assíncrona com ViaCEP/FakeStore, resolução de falhas de concorrência e conformidade com o ecossistema reativo moderno do Android.
+    </p>
+
+    <div class="flex flex-wrap items-center justify-center gap-4">
+      <a href="https://github.com/Marcos240417/My-Store" target="_blank" class="px-6 py-3 rounded-xl bg-brand-orange hover:bg-brand-orangeDark text-white font-semibold transition glow-orange flex items-center gap-2">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Ver Repositório no GitHub
+      </a>
+      <a href="#snippets" class="px-6 py-3 rounded-xl bg-brand-cardBg hover:bg-slate-800 border border-brand-cardBorder text-slate-200 font-semibold transition">
+        Inspecionar Código
+      </a>
+    </div>
+  </header>
+
+  <!-- Métricas de Arquitetura -->
+  <section class="relative z-10 max-w-5xl mx-auto px-6 py-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="p-5 rounded-xl bg-brand-cardBg border border-brand-cardBorder">
+        <span class="text-xs font-mono text-slate-400">Arquitetura</span>
+        <p class="text-xl font-bold text-white mt-1">MVVM + Clean</p>
+        <span class="text-xs text-slate-500">Fluxos desacoplados por camada</span>
+      </div>
+      <div class="p-5 rounded-xl bg-brand-cardBg border border-brand-cardBorder">
+        <span class="text-xs font-mono text-slate-400">Comportamento</span>
+        <p class="text-xl font-bold text-white mt-1">Offline-First</p>
+        <span class="text-xs text-slate-500">Persistência Room + Cache REST</span>
+      </div>
+      <div class="p-5 rounded-xl bg-brand-cardBg border border-brand-cardBorder">
+        <span class="text-xs font-mono text-slate-400">Injeção</span>
+        <p class="text-xl font-bold text-white mt-1">Koin Core</p>
+        <span class="text-xs text-slate-500">Singletons & ViewModels automáticos</span>
+      </div>
+      <div class="p-5 rounded-xl bg-brand-cardBg border border-brand-cardBorder">
+        <span class="text-xs font-mono text-slate-400">UI Declarativa</span>
+        <p class="text-xl font-bold text-white mt-1">Compose 100%</p>
+        <span class="text-xs text-slate-500">Sem fragments ou XML legados</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seção de Código Interativo (Code Showcase) -->
+  <section id="snippets" class="relative z-10 max-w-5xl mx-auto px-6 py-16">
+    <div class="mb-8">
+      <h2 class="text-xs font-mono uppercase tracking-wider text-brand-orange mb-1">Módulos em Produção</h2>
+      <p class="text-3xl font-bold text-white">Trechos de Código do Projeto</p>
+      <p class="text-sm text-slate-400 mt-1">Implementações reais desenvolvidas no repositório <span class="font-mono text-slate-300">Marcos240417/My-Store</span>.</p>
+    </div>
+
+    <!-- Container com Abas -->
+    <div class="rounded-xl border border-brand-cardBorder bg-brand-cardBg overflow-hidden shadow-2xl">
+      <!-- Navegação de Abas -->
+      <div class="flex flex-wrap items-center bg-[#07080D] border-b border-brand-cardBorder px-4 pt-2 gap-2">
+        <button onclick="switchTab('tab-offset')" id="btn-tab-offset" class="px-4 py-2 text-xs font-mono rounded-t-lg transition border-b-2 border-brand-orange text-white bg-brand-cardBg">
+          CepVisualTransformation.kt
+        </button>
+        <button onclick="switchTab('tab-flow')" id="btn-tab-flow" class="px-4 py-2 text-xs font-mono rounded-t-lg transition border-b-2 border-transparent text-slate-400 hover:text-white">
+          HomeViewModel.kt (combine)
+        </button>
+        <button onclick="switchTab('tab-viacep')" id="btn-tab-viacep" class="px-4 py-2 text-xs font-mono rounded-t-lg transition border-b-2 border-transparent text-slate-400 hover:text-white">
+          EnderecosViewModel.kt (ViaCEP)
+        </button>
+        <button onclick="switchTab('tab-history')" id="btn-tab-history" class="px-4 py-2 text-xs font-mono rounded-t-lg transition border-b-2 border-transparent text-slate-400 hover:text-white">
+          HistoricoViewModel.kt (Sessão)
+        </button>
+      </div>
+
+      <!-- Aba 1: OffsetMapping / VisualTransformation -->
+      <div id="tab-offset" class="tab-content block">
+        <div class="p-4 bg-black/40 border-b border-white/5 text-xs text-slate-300 flex justify-between items-center">
+          <span><strong>Desafio:</strong> Evita a exceção <code class="text-red-400">IllegalStateException: OffsetMapping.originalToTransformed</code> ao limitar e mapear o cursor bidirecional no 5º dígito do CEP.</span>
+          <span class="text-[10px] font-mono text-slate-500">core/util</span>
+        </div>
+        <pre><code class="language-kotlin">class CepVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digits = text.text.filter { it.isDigit() }.take(8)
+        val out = buildString {
+            for (i in digits.indices) {
+                append(digits[i])
+                if (i == 4 && digits.length > 5) append('-')
+            }
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                val clamped = offset.coerceIn(0, digits.length)
+                return if (clamped <= 5) clamped else (clamped + 1).coerceAtMost(out.length)
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                val clamped = offset.coerceIn(0, out.length)
+                return if (clamped <= 5) clamped else (clamped - 1).coerceAtMost(digits.length)
+            }
+        }
+
+        return TransformedText(AnnotatedString(out), offsetMapping)
+    }
+}</code></pre>
+      </div>
+
+      <!-- Aba 2: HomeViewModel combine -->
+      <div id="tab-flow" class="tab-content hidden">
+        <div class="p-4 bg-black/40 border-b border-white/5 text-xs text-slate-300 flex justify-between items-center">
+          <span><strong>Desafio:</strong> Filtragem multi-critério segregando flags de botões (Frete Grátis) de buscas por texto com checagem <code class="text-amber-400">busca.isBlank()</code>.</span>
+          <span class="text-[10px] font-mono text-slate-500">features/home</span>
+        </div>
+        <pre><code class="language-kotlin">val produtos: StateFlow<List<ProdutoEntity>> = combine(
+    produtoRepository.listarProdutos(),
+    _textoBusca,
+    _categoriaAtiva,
+    _apenasFreteGratis
+) { lista, busca, categoria, apenasFrete ->
+    lista
+        .distinctBy { it.id }
+        .filter { produto ->
+            val matchCat = categoria == "Todos" || produto.categoria.equals(categoria, ignoreCase = true)
+            // Impede que queries vazias ou botões de atalho zerem a grade de itens
+            val matchBusca = busca.isBlank() || produto.titulo.contains(busca.trim(), ignoreCase = true)
+            val matchFrete = !apenasFrete || produto.freteGratis
+
+            matchCat && matchBusca && matchFrete
+        }
+}
+.flowOn(Dispatchers.Default)
+.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())</code></pre>
+      </div>
+
+      <!-- Aba 3: EnderecosViewModel ViaCEP -->
+      <div id="tab-viacep" class="tab-content hidden">
+        <div class="p-4 bg-black/40 border-b border-white/5 text-xs text-slate-300 flex justify-between items-center">
+          <span><strong>Desafio:</strong> Consumo reativo da API do ViaCEP com coroutines em background (<code class="text-blue-400">Dispatchers.IO</code>) e postagem segura na UI.</span>
+          <span class="text-[10px] font-mono text-slate-500">features/enderecos</span>
+        </div>
+        <pre><code class="language-kotlin">fun buscarCep(cepNumeros: String, onResultado: (DadosEnderecoCep?) -> Unit) {
+    val cepLimpo = cepNumeros.filter { it.isDigit() }
+    if (cepLimpo.length != 8) return
+
+    viewModelScope.launch(Dispatchers.IO) {
+        _carregandoCep.value = true
+        val dados = runCatching {
+            val response = viaCepService.buscarEndereco(cepLimpo)
+            if (response.erro == true) null else {
+                DadosEnderecoCep(
+                    logradouro = response.logradouro.orEmpty(),
+                    bairro = response.bairro.orEmpty(),
+                    cidade = response.localidade.orEmpty(),
+                    estado = response.uf.orEmpty().uppercase()
+                )
+            }
+        }.getOrNull()
+
+        withContext(Dispatchers.Main) {
+            _carregandoCep.value = false
+            onResultado(dados)
+        }
+    }
+}</code></pre>
+      </div>
+
+      <!-- Aba 4: HistoricoViewModel Sessão -->
+      <div id="tab-history" class="tab-content hidden">
+        <div class="p-4 bg-black/40 border-b border-white/5 text-xs text-slate-300 flex justify-between items-center">
+          <span><strong>Desafio:</strong> Múltiplas sessões ativas no dispositivo via <code class="text-emerald-400">flatMapLatest</code> ligado ao DataStore, prevenindo vazamento de histórico.</span>
+          <span class="text-[10px] font-mono text-slate-500">features/historico</span>
+        </div>
+        <pre><code class="language-kotlin">@OptIn(ExperimentalCoroutinesApi::class)
+class HistoricoViewModel(
+    private val repository: PedidoRepository,
+    sessionManager: SessionManager
+) : ViewModel() {
+
+    // E-mail reativo sincronizado com o DataStore
+    private val emailUsuario: StateFlow<String> = sessionManager.usuarioEmailFlow
+        .map { it ?: AppConstants.DEFAULT_USER_EMAIL }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppConstants.DEFAULT_USER_EMAIL)
+
+    // Reconecta à query do Room instantaneamente quando o usuário logado muda
+    val pedidos: StateFlow<List<PedidoEntity>> = emailUsuario
+        .flatMapLatest { email -> repository.obterPedidosPorUsuario(email) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun confirmarEntregaItem(pedidoId: Int, produtoId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { repository.confirmarEntregaItem(pedidoId, produtoId) }
+        }
+    }
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Arquitetura Detalhada -->
+  <section id="arquitetura" class="relative z-10 max-w-5xl mx-auto px-6 py-12">
+    <div class="p-8 rounded-2xl bg-brand-cardBg border border-brand-cardBorder">
+      <h3 class="text-2xl font-bold text-white mb-4">Pipeline e Fluxo de Dados</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <div class="p-5 rounded-xl bg-black/40 border border-white/5">
+          <div class="w-8 h-8 rounded-lg bg-brand-orange/10 text-brand-orange flex items-center justify-center font-bold text-sm mb-3">1</div>
+          <h4 class="text-white font-semibold text-sm">Camada de Apresentação</h4>
+          <p class="text-slate-400 text-xs mt-2 leading-relaxed">Desenvolvida integralmente em <strong>Jetpack Compose</strong>. Gerencia estados imutáveis via <code class="text-brand-orange">StateFlow</code> e captura eventos do usuário desacoplados dos ciclos de vida da Activity.</p>
+        </div>
+        <div class="p-5 rounded-xl bg-black/40 border border-white/5">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm mb-3">2</div>
+          <h4 class="text-white font-semibold text-sm">Camada de Domínio & Sessão</h4>
+          <p class="text-slate-400 text-xs mt-2 leading-relaxed">Injeção dinâmica provida pelo <strong>Koin</strong>. O <strong>SessionManager</strong> (Jetpack DataStore) emite credenciais criptografadas para isolamento multi-tenant local.</p>
+        </div>
+        <div class="p-5 rounded-xl bg-black/40 border border-white/5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-sm mb-3">3</div>
+          <h4 class="text-white font-semibold text-sm">Persistência & Rede</h4>
+          <p class="text-slate-400 text-xs mt-2 leading-relaxed"><strong>Room Database</strong> com operações assíncronas em Coroutines e consumo de REST APIs (FakeStore e ViaCEP) por meio do <strong>Retrofit 2</strong> e serialização Gson.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Repositório -->
+  <section class="relative z-10 max-w-5xl mx-auto px-6 py-12 text-center">
+    <div class="p-10 rounded-2xl bg-gradient-to-r from-brand-cardBg via-[#171B2B] to-brand-cardBg border border-brand-cardBorder">
+      <h3 class="text-2xl sm:text-3xl font-extrabold text-white mb-3">Explore a base de código completa</h3>
+      <p class="text-sm text-slate-400 max-w-xl mx-auto mb-6">
+        Acesse o repositório no GitHub para analisar os DAOs, entidades do Room, injeção de dependência e componentes de tela.
+      </p>
+      <a href="https://github.com/Marcos240417/My-Store" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-200 font-bold transition">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        github.com/Marcos240417/My-Store
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="relative z-10 border-t border-brand-cardBorder py-8 px-6 text-center text-xs text-slate-500 font-mono">
+    <p>Projeto Mercado Galga • Criado por Marcos • Licenciado sob MIT</p>
+  </footer>
+
+  <!-- Script das Abas -->
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+      
+      document.getElementById(tabId).classList.remove('hidden');
+      document.getElementById(tabId).classList.add('block');
+
+      const buttons = [
+        { btn: 'btn-tab-offset', id: 'tab-offset' },
+        { btn: 'btn-tab-flow', id: 'tab-flow' },
+        { btn: 'btn-tab-viacep', id: 'tab-viacep' },
+        { btn: 'btn-tab-history', id: 'tab-history' }
+      ];
+
+      buttons.forEach(item => {
+        const el = document.getElementById(item.btn);
+        if (item.id === tabId) {
+          el.className = 'px-4 py-2 text-xs font-mono rounded-t-lg transition border-b-2 border-brand-orange text-white bg-brand-cardBg';
+        } else {
+          el.className = 'px-4 py-2 text-xs font-mono rounded-t-lg transition border-b-2 border-transparent text-slate-400 hover:text-white';
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
