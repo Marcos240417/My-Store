@@ -1,4 +1,4 @@
-package com.example.mymercado.rh.di
+package com.example.mymercado.di
 
 import android.app.Application
 import org.koin.android.ext.koin.androidContext
