@@ -2,20 +2,28 @@ package com.example.mymercado.features.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mymercado.core.data.CarrinhoEntity
-import com.example.mymercado.core.data.ProdutoEntity
-import com.example.mymercado.domain.repository.VendasRepository
+import com.example.mymercado.core.common.AppConstants
+import com.example.mymercado.data.datasource.local.entity.CarrinhoEntity
+import com.example.mymercado.data.datasource.local.entity.ProdutoEntity
+import com.example.mymercado.domain.repository.CarrinhoRepository
+import com.example.mymercado.domain.repository.ProdutoRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
+class HomeViewModel(
+    private val produtoRepository: ProdutoRepository,
+    private val carrinhoRepository: CarrinhoRepository
+) : ViewModel() {
 
     private val _textoBusca = MutableStateFlow("")
     val textoBusca = _textoBusca.asStateFlow()
 
     private val _categoriaAtiva = MutableStateFlow("Todos")
     val categoriaAtiva = _categoriaAtiva.asStateFlow()
+
+    private val _apenasFreteGratis = MutableStateFlow(false)
+    val apenasFreteGratis = _apenasFreteGratis.asStateFlow()
 
     private val _estaCarregando = MutableStateFlow(false)
     val estaCarregando = _estaCarregando.asStateFlow()
@@ -28,68 +36,87 @@ class HomeViewModel(private val repository: VendasRepository) : ViewModel() {
     }
 
     fun sincronizar() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _estaCarregando.value = true
             _mostrarAvisoOffline.value = false
-            try {
-                repository.sincronizarProdutos()
-            } catch (e: Exception) {
+            runCatching {
+                produtoRepository.sincronizarProdutos()
+            }.onFailure {
                 _mostrarAvisoOffline.value = true
-            } finally {
+            }.also {
                 _estaCarregando.value = false
             }
         }
     }
 
-    val itensCarrinho: StateFlow<List<CarrinhoEntity>> = repository.verCarrinho("user@galga.com")
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    // Mantido e pronto para uso na HomeScreen (Badge ou ícone)
-    val favoritos: StateFlow<List<ProdutoEntity>> = repository.listarFavoritos()
+    val itensCarrinho: StateFlow<List<CarrinhoEntity>> = carrinhoRepository.verCarrinho(AppConstants.DEFAULT_USER_EMAIL)
+        .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val produtos: StateFlow<List<ProdutoEntity>> = combine(
-        repository.listarProdutos(), _textoBusca, _categoriaAtiva
-    ) { lista, busca, categoria ->
+        produtoRepository.listarProdutos(),
+        _textoBusca,
+        _categoriaAtiva,
+        _apenasFreteGratis
+    ) { lista, busca, categoria, apenasFrete ->
         lista
-            .distinctBy { it.produtoId }
+            .distinctBy { it.id }
             .filter { produto ->
                 val matchCat = categoria == "Todos" || produto.categoria.equals(categoria, ignoreCase = true)
-                val matchBusca = produto.titulo.contains(busca, ignoreCase = true)
-                matchCat && matchBusca
-            }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+                // Se o campo de busca estiver vazio/em branco, não filtra por título
+                val matchBusca = busca.isBlank() || produto.titulo.contains(busca.trim(), ignoreCase = true)
+                val matchFrete = !apenasFrete || produto.freteGratis
 
-    fun atualizarBusca(t: String) { _textoBusca.value = t }
-    fun atualizarCategoria(c: String) { _categoriaAtiva.value = c }
+                matchCat && matchBusca && matchFrete
+            }
+    }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun atualizarBusca(t: String) {
+        _apenasFreteGratis.value = false
+        _textoBusca.value = t
+    }
+
+    fun atualizarCategoria(c: String) {
+        _apenasFreteGratis.value = false
+        _categoriaAtiva.value = c
+    }
+
+    fun filtrarFreteGratis() {
+        _apenasFreteGratis.value = true
+        _categoriaAtiva.value = "Todos"
+        _textoBusca.value = ""
+    }
+
+    fun filtrarOfertasRelampago() {
+        _apenasFreteGratis.value = false
+        _categoriaAtiva.value = "Todos"
+        _textoBusca.value = ""
+    }
 
     fun adicionarAoCarrinho(produto: ProdutoEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // CORREÇÃO: Passando o vendedorNome obrigatório
-                // Simulamos o nome da loja baseado na categoria para o agrupamento Shopee
+            runCatching {
                 val nomeLoja = "${produto.categoria.replaceFirstChar { it.uppercase() }} Store"
-
-                repository.adicionarProdutoAoCarrinho(
+                carrinhoRepository.adicionarProdutoAoCarrinho(
                     CarrinhoEntity(
-                        produtoId = produto.produtoId,
-                        usuarioEmail = "user@galga.com",
+                        produtoId = produto.id,
+                        usuarioEmail = AppConstants.DEFAULT_USER_EMAIL,
                         titulo = produto.titulo,
                         precoNoMomento = produto.preco,
                         urlImagem = produto.urlImagem,
                         quantidade = 1,
-                        vendedorNome = nomeLoja // Parâmetro agora preenchido
+                        vendedorNome = nomeLoja
                     )
                 )
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
 
     fun alternarFavorito(id: Int, isFav: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.alternarFavorito(id, isFav)
+            produtoRepository.alternarFavorito(id, isFav)
         }
     }
 }

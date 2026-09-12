@@ -2,50 +2,47 @@ package com.example.mymercado.features.detalhes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mymercado.core.data.CarrinhoEntity
-import com.example.mymercado.core.data.ProdutoEntity
-import com.example.mymercado.domain.repository.VendasRepository
+import com.example.mymercado.core.common.AppConstants
+import com.example.mymercado.data.datasource.local.entity.CarrinhoEntity
+import com.example.mymercado.data.datasource.local.entity.ProdutoEntity
+import com.example.mymercado.domain.repository.CarrinhoRepository
+import com.example.mymercado.domain.repository.ProdutoRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class DetalhesViewModel(private val repository: VendasRepository) : ViewModel() {
+class DetalhesViewModel(
+    private val produtoRepository: ProdutoRepository,
+    private val carrinhoRepository: CarrinhoRepository
+) : ViewModel() {
 
     private val _produto = MutableStateFlow<ProdutoEntity?>(null)
     val produto: StateFlow<ProdutoEntity?> = _produto.asStateFlow()
 
     fun carregarProduto(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _produto.value = repository.buscarProdutoPorId(id)
-            } catch (e: Exception) {
-                e.printStackTrace()
+            runCatching {
+                _produto.value = produtoRepository.buscarProdutoPorId(id)
             }
         }
     }
 
     fun adicionarAoCarrinho(produto: ProdutoEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // CORREÇÃO: Passando o vendedorNome para bater com a nova Entity
-                // Usamos a categoria como nome da loja ou um nome fixo para simular a Shopee
-                val nomeDaLoja = produto.categoria.replaceFirstChar { it.uppercase() } + " Official"
-
-                repository.adicionarProdutoAoCarrinho(
-                    CarrinhoEntity(
-                        produtoId = produto.produtoId,
-                        usuarioEmail = "user@galga.com",
-                        quantidade = 1,
-                        precoNoMomento = produto.preco,
-                        titulo = produto.titulo,
-                        urlImagem = produto.urlImagem,
-                        vendedorNome = nomeDaLoja // Agora o parâmetro está aqui!
-                    )
+            runCatching {
+                val nomeDaLoja = "${produto.categoria.replaceFirstChar { it.uppercase() }} Official"
+                val item = CarrinhoEntity(
+                    produtoId = produto.id, // Corrigido de produto.produtoId para produto.id
+                    usuarioEmail = AppConstants.DEFAULT_USER_EMAIL,
+                    quantidade = 1,
+                    precoNoMomento = produto.preco,
+                    titulo = produto.titulo,
+                    urlImagem = produto.urlImagem,
+                    vendedorNome = nomeDaLoja
                 )
-            } catch (e: Exception) {
-                e.printStackTrace()
+                carrinhoRepository.adicionarProdutoAoCarrinho(item)
             }
         }
     }

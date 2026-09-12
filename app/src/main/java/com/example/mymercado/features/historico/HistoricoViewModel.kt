@@ -2,33 +2,33 @@ package com.example.mymercado.features.historico
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mymercado.core.data.PedidoEntity
-import com.example.mymercado.domain.repository.VendasRepository
+import com.example.mymercado.core.common.AppConstants
+import com.example.mymercado.core.datastore.SessionManager
+import com.example.mymercado.data.datasource.local.entity.PedidoEntity
+import com.example.mymercado.domain.repository.PedidoRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class HistoricoViewModel(private val repository: VendasRepository) : ViewModel() {
+@OptIn(ExperimentalCoroutinesApi::class)
+class HistoricoViewModel(
+    private val repository: PedidoRepository,
+    sessionManager: SessionManager
+) : ViewModel() {
 
-    private val _pedidos = MutableStateFlow<List<PedidoEntity>>(emptyList())
-    val pedidos: StateFlow<List<PedidoEntity>> = _pedidos.asStateFlow()
+    private val emailUsuario: StateFlow<String> = sessionManager.usuarioEmailFlow
+        .map { it ?: AppConstants.DEFAULT_USER_EMAIL }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppConstants.DEFAULT_USER_EMAIL)
 
-    private val usuarioEmail = "user@galga.com"
+    val pedidos: StateFlow<List<PedidoEntity>> = emailUsuario
+        .flatMapLatest { email -> repository.obterPedidosPorUsuario(email) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    init {
-        carregarHistorico()
-    }
-
-    private fun carregarHistorico() {
+    fun confirmarEntregaItem(pedidoId: Int, produtoId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                repository.obterPedidosPorUsuario(usuarioEmail).collect { lista ->
-                    _pedidos.value = lista
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            runCatching {
+                repository.confirmarEntregaItem(pedidoId, produtoId)
             }
         }
     }

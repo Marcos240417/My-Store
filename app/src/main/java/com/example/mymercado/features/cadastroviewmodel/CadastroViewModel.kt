@@ -1,26 +1,30 @@
 package com.example.mymercado.features.cadastroviewmodel
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mymercado.core.common.AppConstants
 import com.example.mymercado.core.data.FormaPagamento
-import com.example.mymercado.core.data.remoteviacep.EnderecoDto
-import com.example.mymercado.core.data.remoteviacep.toUsuarioEntity
-import com.example.mymercado.domain.repository.VendasRepository
+import com.example.mymercado.data.datasource.remote.dto.EnderecoDto
+import com.example.mymercado.data.datasource.remote.dto.toUsuarioEntity
+import com.example.mymercado.domain.repository.UsuarioRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class CadastroViewModel(private val repository: VendasRepository) : ViewModel() {
+class CadastroViewModel(
+    private val repository: UsuarioRepository
+) : ViewModel() {
 
     private var enderecoOriginal: EnderecoDto? = null
 
     private val _estaCarregando = MutableStateFlow(false)
     val estaCarregando = _estaCarregando.asStateFlow()
 
-    // Estados para UI
     var nome by mutableStateOf("")
     var email by mutableStateOf("")
     var cpf by mutableStateOf("")
@@ -39,8 +43,8 @@ class CadastroViewModel(private val repository: VendasRepository) : ViewModel() 
 
     private fun carregarDadosParaEdicao() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                repository.obterUsuarioPorEmail("user@galga.com").collect { usuario ->
+            runCatching {
+                repository.obterUsuarioPorEmail(AppConstants.DEFAULT_USER_EMAIL).collect { usuario ->
                     usuario?.let {
                         withContext(Dispatchers.Main) {
                             nome = it.nome
@@ -56,18 +60,17 @@ class CadastroViewModel(private val repository: VendasRepository) : ViewModel() 
                         }
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
 
     fun onCepChange(novoCep: String) {
-        val apenasNumeros = novoCep.filter { it.isDigit() }
-        if (apenasNumeros.length <= 8) {
-            cep = apenasNumeros
-            if (apenasNumeros.length == 8) {
-                buscarEndereco(apenasNumeros)
+        novoCep.filter { it.isDigit() }.let { apenasNumeros ->
+            if (apenasNumeros.length <= 8) {
+                cep = apenasNumeros
+                if (apenasNumeros.length == 8) {
+                    buscarEndereco(apenasNumeros)
+                }
             }
         }
     }
@@ -75,8 +78,9 @@ class CadastroViewModel(private val repository: VendasRepository) : ViewModel() 
     private fun buscarEndereco(cepValue: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _estaCarregando.value = true
-            try {
-                val dto = repository.buscarEnderecoRemoto(cepValue)
+            runCatching {
+                repository.buscarEnderecoRemoto(cepValue)
+            }.onSuccess { dto ->
                 if (dto.erro != true) {
                     enderecoOriginal = dto
                     withContext(Dispatchers.Main) {
@@ -86,9 +90,7 @@ class CadastroViewModel(private val repository: VendasRepository) : ViewModel() 
                         estado = dto.uf
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
+            }.also {
                 _estaCarregando.value = false
             }
         }
@@ -100,28 +102,29 @@ class CadastroViewModel(private val repository: VendasRepository) : ViewModel() 
 
     fun salvarCadastro(onSucesso: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val dtoParaConverter = enderecoOriginal ?: EnderecoDto(
-                    cep = cep,
-                    logradouro = logradouro,
-                    complemento = "",
-                    bairro = bairro,
-                    localidade = cidade,
-                    uf = estado
-                )
+            val dtoParaConverter = enderecoOriginal ?: EnderecoDto(
+                cep = cep,
+                logradouro = logradouro,
+                complemento = "",
+                bairro = bairro,
+                localidade = cidade,
+                uf = estado
+            )
 
-                val usuarioFinal = dtoParaConverter.toUsuarioEntity(
-                    nome = nome,
-                    email = "user@galga.com",
-                    cpf = cpf,
-                    telefone = telefone,
-                    numero = numero
-                )
+            val usuarioFinal = dtoParaConverter.toUsuarioEntity(
+                nome = nome,
+                email = AppConstants.DEFAULT_USER_EMAIL,
+                cpf = cpf,
+                telefone = telefone,
+                numero = numero
+            )
 
+            runCatching {
                 repository.salvarUsuario(usuarioFinal)
-                withContext(Dispatchers.Main) { onSucesso() }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            }.onSuccess {
+                withContext(Dispatchers.Main) {
+                    onSucesso()
+                }
             }
         }
     }
