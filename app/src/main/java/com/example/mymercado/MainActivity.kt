@@ -3,21 +3,23 @@ package com.example.mymercado
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
-import com.example.mymercado.navigation.NavGraph
+import com.example.mymercado.features.configuracoes.ConfiguracoesViewModel
+import com.example.mymercado.presentation.navigation.NavGraph
 import com.example.mymercado.ui.theme.MyMercadoTheme
-
+import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            MyMercadoTheme {
+            val configViewModel: ConfiguracoesViewModel = koinViewModel()
+            val modoEscuroAtivo by configViewModel.modoEscuro.collectAsState()
+
+            MyMercadoTheme(darkTheme = modoEscuroAtivo) {
                 val navController = rememberNavController()
-                // Se esta linha estiver vermelha ou não estiver roxa/colorida,
-                // o import acima está errado.
                 NavGraph(navController = navController)
             }
         }

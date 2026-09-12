@@ -1,18 +1,9 @@
 package com.example.mymercado.ui.screen
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,8 +19,9 @@ fun SelecaoPagamentoComponent(
     Column {
         Text(
             text = "Forma de Pagamento Preferida",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            // RESOLVE: Tipografia padronizada em vez de peso manual isolado
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Row(
@@ -38,15 +30,35 @@ fun SelecaoPagamentoComponent(
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Iteramos sobre os enums (exceto cartão, se for o caso)
+            // Filtramos as formas de pagamento (exceto cartão, conforme sua lógica)
             FormaPagamento.entries.filter { it != FormaPagamento.CARTAO_CREDITO }.forEach { forma ->
+                val isSelected = forma == formaSelecionada
+
                 FilterChip(
-                    selected = (forma == formaSelecionada),
+                    selected = isSelected,
                     onClick = { onFormaSelected(forma) },
-                    label = { Text(forma.name) },
-                    leadingIcon = if (forma == formaSelecionada) {
-                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    } else null
+                    // RESOLVE: Nome amigável e tipografia de label
+                    label = {
+                        Text(
+                            text = forma.displayName, // Assumindo que você tem um displayName no Enum
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    },
+                    leadingIcon = if (isSelected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    } else null,
+                    // RESOLVE: Cores baseadas na cor primária (Laranja) do MyMercado
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        selectedLabelColor = MaterialTheme.colorScheme.primary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
         }

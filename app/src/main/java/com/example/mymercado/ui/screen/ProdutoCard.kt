@@ -1,12 +1,32 @@
 package com.example.mymercado.ui.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -16,10 +36,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.mymercado.core.data.ProdutoEntity
-import java.util.Locale // CERTIFIQUE-SE DE USAR ESTE IMPORT PARA O LOCALE
+import com.example.mymercado.data.datasource.local.entity.ProdutoEntity
+import java.util.Locale
 
 @Composable
 fun ProdutoCard(
@@ -28,72 +47,109 @@ fun ProdutoCard(
     onAdicionarCarrinho: () -> Unit,
     onFavoritarClick: () -> Unit
 ) {
-    // Correção do Locale e Unresolved Reference 'Builder'
-    val localeBr = remember {
-        Locale.Builder().setLanguage("pt").setRegion("BR").build()
-    }
+    val localeBr = remember { Locale.forLanguageTag("pt-BR") }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
             .clickable { onProdutoClick() },
-        shape = RoundedCornerShape(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(1.dp)
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Box {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .background(Color.White)
+            ) {
                 AsyncImage(
                     model = produto.urlImagem,
                     contentDescription = produto.titulo,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .padding(8.dp),
+                        .fillMaxSize()
+                        .padding(12.dp),
                     contentScale = ContentScale.Fit
                 )
 
+                // Botão Favorito Circular com Blur/Container
                 IconButton(
                     onClick = onFavoritarClick,
-                    modifier = Modifier.align(Alignment.TopEnd)
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(32.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                            shape = CircleShape
+                        )
                 ) {
                     Icon(
                         imageVector = if (produto.isFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorito",
-                        tint = if (produto.isFavorito) Color(0xFFEE4D2D) else Color.Gray
+                        contentDescription = "Favoritar",
+                        tint = if (produto.isFavorito) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     text = produto.titulo,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.height(40.dp)
+                    minLines = 2,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                Text(
-                    text = String.format(localeBr, "R$ %.2f", produto.preco),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xFFEE4D2D), // Laranja Shopee
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Correção Unresolved reference 'ButtonDefaults' (Geralmente falta de import ou erro de digitação)
-                Button(
-                    onClick = onAdicionarCarrinho,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(2.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEE4D2D))
+                // Tag de Frete Grátis
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    shape = RoundedCornerShape(4.dp)
                 ) {
-                    Text("Adicionar", fontSize = 11.sp, color = Color.White)
+                    Text(
+                        text = "Frete Grátis",
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = String.format(localeBr, "R$ %.2f", produto.preco),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold)
+                    )
+
+                    FilledIconButton(
+                        onClick = onAdicionarCarrinho,
+                        modifier = Modifier.size(34.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AddShoppingCart,
+                            contentDescription = "Adicionar ao carrinho",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }

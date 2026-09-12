@@ -1,17 +1,21 @@
 package com.example.mymercado.ui.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,123 +29,151 @@ import java.util.Locale
 fun DetalhesScreen(
     produtoId: Int,
     viewModel: DetalhesViewModel = koinViewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigateToCarrinho: () -> Unit,
+    onComprarAgora: () -> Unit
 ) {
     LaunchedEffect(produtoId) {
         viewModel.carregarProduto(produtoId)
     }
 
-    val produto by viewModel.produto.collectAsState(initial = null)
+    val produto by viewModel.produto.collectAsState()
+    val haptic = LocalHapticFeedback.current
+    val localeBr = remember { Locale.forLanguageTag("pt-BR") }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Detalhes do Produto") },
+                title = { Text("Detalhes do Produto", style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
-                }
+                },
+                actions = {
+                    IconButton(onClick = { /* Compartilhar */ }) {
+                        Icon(Icons.Default.Share, contentDescription = "Compartilhar")
+                    }
+                    IconButton(onClick = onNavigateToCarrinho) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = "Carrinho")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         bottomBar = {
-            produto?.let { item ->
-                Surface(shadowElevation = 8.dp) {
-                    BottomAppBar(containerColor = Color.White) {
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // CORREÇÃO: Usando forLanguageTag para evitar o construtor depreciado
-                            val precoFormatado = String.format(
-                                Locale.forLanguageTag("pt-BR"),
-                                "R$ %.2f",
-                                item.preco
-                            )
-
-                            Text(
-                                text = precoFormatado,
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = Color(0xFF2E7D32),
-                                fontWeight = FontWeight.Bold
-                            )
-                            Button(
-                                onClick = { viewModel.adicionarAoCarrinho(item) },
-                                modifier = Modifier.height(50.dp),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text("Adicionar ao Carrinho")
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 12.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                        .navigationBarsPadding()
+                ) {
+                    Button(
+                        onClick = {
+                            produto?.let {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.adicionarAoCarrinho(it)
                             }
-                        }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Adicionar", style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Button(
+                        onClick = {
+                            produto?.let {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.adicionarAoCarrinho(it)
+                                onComprarAgora()
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Comprar Agora", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
         }
     ) { padding ->
-        if (produto == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            produto?.let { item ->
-                Column(
+        produto?.let { item ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                AsyncImage(
+                    model = item.urlImagem,
+                    contentDescription = item.titulo,
                     modifier = Modifier
-                        .padding(padding)
-                        .verticalScroll(rememberScrollState())
-                        .fillMaxSize()
-                ) {
-                    AsyncImage(
-                        model = item.urlImagem,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxWidth().height(350.dp),
-                        contentScale = ContentScale.Fit
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .background(Color.White),
+                    contentScale = ContentScale.Fit
+                )
+
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = String.format(localeBr, "R$ %.2f", item.preco),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
+                        color = MaterialTheme.colorScheme.primary
                     )
 
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            text = item.titulo,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Text(
+                        text = item.titulo,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
-                        Spacer(Modifier.height(8.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
 
-                        Surface(
-                            color = Color(0xFFE8F5E9),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                "Categoria: ${item.categoria}",
-                                color = Color(0xFF2E7D32),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
+                    Text(
+                        text = "Descrição",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
-                        Spacer(Modifier.height(16.dp))
-                        HorizontalDivider()
-                        Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = item.descricao,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 8.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 24.sp
+                    )
 
-                        Text(
-                            text = "Descrição",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        Spacer(Modifier.height(8.dp))
-
-                        Text(
-                            text = item.descricao,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.DarkGray,
-                            lineHeight = 24.sp
-                        )
-
-                        Spacer(Modifier.height(100.dp))
-                    }
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
+        } ?: Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
     }
 }
